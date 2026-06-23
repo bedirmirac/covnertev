@@ -94,6 +94,15 @@ Libraries:
 # 📄 License
 This project is licensed under the MIT License.
 
+# ⚖️ Acknowledgments & Licenses
+convertev is a wrapper tool that utilizes the following open-source software to perform conversions:
+
+FFmpeg: Used for media conversions. FFmpeg is a trademark of Fabrice Bellard, originator of the FFmpeg project. Licensed under the LGPL/GPL.
+
+LibreOffice: Used for document conversions. Licensed under the Mozilla Public License v2.0.
+
+Note: convertev does not distribute these binaries. Users must install them separately.
+
 # ✉️ Contact
 Developer: Miraç Bedir
 
