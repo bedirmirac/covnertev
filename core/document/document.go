@@ -58,7 +58,7 @@ func getLibreOfficePath() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("Libreoffice couldn't be found. Please, use the --libreoffice-path flag to be able to run the program if it is installed. IF NOT, please install Libreoffice")
+	return "", fmt.Errorf("libreoffice couldn't be found. Please install Libreoffice or specify its location using --libreoffice-path")
 }
 
 func PdfFromOffice(inputPath string) error {
@@ -76,7 +76,7 @@ func PdfFromOffice(inputPath string) error {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Libre Office error: %v\n IN DETAIL: %s", err, string(output))
+		return fmt.Errorf("libre Office error: %v\n IN DETAIL: %s", err, string(output))
 	}
 	return nil
 }
@@ -96,7 +96,7 @@ func DocFromPdf(inputPath string) error {
 	cmd := exec.Command(libreofficeExe, args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Libre Office Error: %v\n IN DETAIL:  %s", err, string(output))
+		return fmt.Errorf("libre Office Error: %v\n IN DETAIL:  %s", err, string(output))
 	}
 	return nil
 }

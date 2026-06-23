@@ -2,15 +2,47 @@ package media
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-func GetMediaDuration(inputPath string, ffprobePath string) (float64, error) {
+var customFFmpegPath string
 
+func init() {
+	flag.StringVar(&customFFmpegPath, "ffmpeg-path", "", "path to ffmpeg executable")
+}
+
+func GetFFmpegPath() (string, error) {
+	if customFFmpegPath != "" {
+		return customFFmpegPath, nil
+	}
+	if envPath := os.Getenv("FFMPEG_PATH"); envPath != "" {
+		return envPath, nil
+	}
+	if path, err := exec.LookPath("ffmpeg"); err == nil {
+		return path, nil
+	}
+	return "", fmt.Errorf("ffmpeg not found. Please install FFmpeg or specify its location using --ffmpeg-path or FFMPEG_PATH")
+}
+
+func GetFFprobePath() (string, error) {
+	if envPath := os.Getenv("FFPROBE_PATH"); envPath != "" {
+		return envPath, nil
+	}
+
+	if path, err := exec.LookPath("ffprobe"); err == nil {
+		return path, nil
+	}
+
+	return "", fmt.Errorf("ffprobe not found. Please install FFmpeg or specify FFPROBE_PATH")
+}
+
+func GetMediaDuration(inputPath string, ffprobePath string) (float64, error) {
 	args := []string{
 		"-v", "error",
 		"-show_entries", "format=duration",
@@ -22,14 +54,14 @@ func GetMediaDuration(inputPath string, ffprobePath string) (float64, error) {
 
 	output, err := cmd.Output()
 	if err != nil {
-		return 0, fmt.Errorf("An error ocurred while ffprobe running: %v", err)
+		return 0, fmt.Errorf("an error ocurred while ffprobe running: %v", err)
 	}
 
 	durationStr := strings.TrimSpace(string(output))
 
 	duration, err := strconv.ParseFloat(durationStr, 64)
 	if err != nil {
-		return 0, fmt.Errorf("Time duration couldn't convert to a mathmatical number: %v", err)
+		return 0, fmt.Errorf("time duration couldn't convert to a mathmatical number: %v", err)
 	}
 
 	return duration, nil
@@ -85,7 +117,7 @@ func MediaConverter(inputPath, outputPath, ffmpeg string, totalDuration float64,
 	}
 
 	if err := cmd.Wait(); err != nil {
-		return fmt.Errorf("An error occured while converting: %v", err)
+		return fmt.Errorf("an error occured while converting: %v", err)
 	}
 
 	return nil

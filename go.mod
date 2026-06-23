@@ -9,6 +9,7 @@ require (
 )
 
 require (
+	fyne.io/fyne/v2 v2.7.4 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/hhrutter/lzw v1.0.0 // indirect
 	github.com/hhrutter/pkcs7 v0.2.2 // indirect

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/bedirmirac/convertev/core/document"
@@ -13,48 +14,64 @@ import (
 )
 
 type Args struct {
-	Mode   string
-	Input  string
-	Output string
+	Mode        *string
+	Input       *string
+	Output      *string
+	FFmpegPath  *string
+	FFprobePath *string
 }
 
-func (a Args) Validate() {
-	if a.Mode == "doc" && a.Output != "" {
-		fmt.Println("Usage in 'doc' mode: convertev -mode doc -i [input]", "Do NOT use '-o'!")
-		flag.Usage()
-		os.Exit(1)
+func (a *Args) Validate() error {
+	if *a.Mode == "doc" && *a.Output != "" {
+		return fmt.Errorf("usage in 'doc' mode: convertev -mode doc -i [input] !Do NOT use '-o'!\n")
 	}
-	if a.Mode == "" || a.Input == "" {
-		fmt.Println("Usage: convertev -mode [img|media] -i [input] -o [output] || convertev -mode [doc] -i [input]")
-		flag.Usage()
-		os.Exit(1)
+	if *a.Mode == "" || *a.Input == "" {
+		return fmt.Errorf("usage: convertev -mode [img|media] -i [input] -o [output] || convertev -mode [doc] -i [input]\n")
 	}
-	if a.Mode == "media" || a.Mode == "img" && a.Output == "" {
-		fmt.Println("Usage in 'media' and 'img': convertev -mode [img|media] -i [input] -o [output]", "Output is needed!")
-		flag.Usage()
-		os.Exit(1)
+	if (*a.Mode == "media" || *a.Mode == "img") && *a.Output == "" {
+		return fmt.Errorf("usage in 'media' and 'img': convertev -mode [img|media] -i [input] -o [output] !Output is needed!\n")
 	}
+	if *a.Mode == "media" && (*a.FFmpegPath == "" || *a.FFprobePath == "") {
+		var err error
+		*a.FFmpegPath, err = media.GetFFmpegPath()
+		if err != nil {
+			return err
+		}
+		*a.FFprobePath, err = media.GetFFprobePath()
+		if err != nil {
+			return err
+		}
+
+	}
+	return nil
 }
 
 func main() {
 	mode := flag.String("mode", "", "Process type: doc, img, media")
 	input := flag.String("i", "", "Input file (or folder) If it is used to convert images into PDF use img1,img2,img3 format) ")
 	output := flag.String("o", "", "output file/path")
-	ffmpegPath := flag.String("ffmpeg", "ffmpeg", "FFmpeg path")
-	ffprobePath := flag.String("ffprobe", "ffprobe", "FFprobe path")
+	ffmpegPath := flag.String("ffmpeg", "", "FFmpeg path")
+	ffprobePath := flag.String("ffprobe", "", "FFprobe path")
+
 	flag.Parse()
 
 	args := Args{
-		Mode:   *mode,
-		Input:  *input,
-		Output: *output,
+		Mode:        mode,
+		Input:       input,
+		Output:      output,
+		FFmpegPath:  ffmpegPath,
+		FFprobePath: ffprobePath,
 	}
 
-	args.Validate()
+	if err := args.Validate(); err != nil {
+		fmt.Println(err)
+		flag.Usage()
+		os.Exit(1)
+	}
 
 	switch *mode {
 	case "doc":
-		if strings.Contains(*input, ".pdf") {
+		if filepath.Ext(*args.Input) == ".pdf" {
 			err := document.DocFromPdf(*input)
 			if err != nil {
 				log.Fatalf("Error while pdf convering to doc")
@@ -68,8 +85,8 @@ func main() {
 		fmt.Println("Document converted.")
 
 	case "img":
-		if strings.Contains(*output, ".pdf") {
-			imgs := strings.Split(*input, (","))
+		if filepath.Ext(*args.Input) == ".pdf" {
+			imgs := strings.Split(*input, ",")
 			err := image.ImageToPDF(imgs, *output)
 			if err != nil {
 				log.Fatalf("Error while image converting to PDF: %v", err)
@@ -84,12 +101,12 @@ func main() {
 		}
 
 	case "media":
-		duration, err := media.GetMediaDuration(*input, *ffprobePath)
+		duration, err := media.GetMediaDuration(*input, *args.FFprobePath)
 		if err != nil {
 			log.Fatalf("Couldn't fetch the media info: %v", err)
 		}
 
-		err = media.MediaConverter(*input, *output, *ffmpegPath, duration, func(percent float64) {
+		err = media.MediaConverter(*input, *output, *args.FFmpegPath, duration, func(percent float64) {
 			fmt.Printf("\rProccess info: %.2f%%", percent)
 		})
 		if err != nil {
