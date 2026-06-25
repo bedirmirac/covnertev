@@ -5,9 +5,9 @@ import (
 	"testing"
 )
 
-// ─────────────────────────────────────────
+// -----------------------------------------
 // ParseTimeToSeconds
-// ─────────────────────────────────────────
+// -----------------------------------------
 
 func TestParseTimeToSeconds(t *testing.T) {
 	tests := []struct {
@@ -15,36 +15,36 @@ func TestParseTimeToSeconds(t *testing.T) {
 		input    string
 		expected float64
 	}{
-		{"sıfır", "00:00:00.00", 0},
-		{"sadece saniye — tam", "00:00:30.00", 30},
-		{"sadece saniye — ondalık", "00:00:30.50", 30.5},
-		{"sadece dakika", "00:01:00.00", 60},
-		{"sadece saat", "01:00:00.00", 3600},
-		{"karışık değer", "01:30:45.25", 5445.25},
-		{"büyük saat değeri", "02:00:00.00", 7200},
-		// Hatalı formatlar — mevcut davranış: sessizce 0 döner
-		{"geçersiz string", "invalid", 0},
-		{"boş string", "", 0},
-		{"eksik kısım (2 parça)", "01:02", 0},
-		{"fazla kısım (4 parça)", "01:02:03:04", 0},
+		{"zero", "00:00:00.00", 0},
+		{"seconds only, whole number", "00:00:30.00", 30},
+		{"seconds only, decimal", "00:00:30.50", 30.5},
+		{"minutes only", "00:01:00.00", 60},
+		{"hours only", "01:00:00.00", 3600},
+		{"mixed values", "01:30:45.25", 5445.25},
+		{"large hour value", "02:00:00.00", 7200},
+		// malformed inputs: current behavior returns 0 silently
+		{"invalid string", "invalid", 0},
+		{"empty string", "", 0},
+		{"missing part (2 parts)", "01:02", 0},
+		{"extra part (4 parts)", "01:02:03:04", 0},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := ParseTimeToSeconds(tt.input)
 			if got != tt.expected {
-				t.Errorf("ParseTimeToSeconds(%q) = %v, beklenen %v", tt.input, got, tt.expected)
+				t.Errorf("ParseTimeToSeconds(%q) = %v, expected %v", tt.input, got, tt.expected)
 			}
 		})
 	}
 }
 
-// ─────────────────────────────────────────
+// -----------------------------------------
 // GetFFmpegPath
-// ─────────────────────────────────────────
+// -----------------------------------------
 
 func TestGetFFmpegPath_EnvVar(t *testing.T) {
-	// customFFmpegPath'i temizle; flag ile set edilmemiş olmalı test ortamında
+	// clear customFFmpegPath; it should not be set by a flag in test environment
 	original := customFFmpegPath
 	customFFmpegPath = ""
 	defer func() { customFFmpegPath = original }()
@@ -54,10 +54,10 @@ func TestGetFFmpegPath_EnvVar(t *testing.T) {
 
 	path, err := GetFFmpegPath()
 	if err != nil {
-		t.Fatalf("GetFFmpegPath() beklenmedik hata: %v", err)
+		t.Fatalf("GetFFmpegPath() unexpected error: %v", err)
 	}
 	if path != fakeFFmpegPath {
-		t.Errorf("GetFFmpegPath() = %q, beklenen %q", path, fakeFFmpegPath)
+		t.Errorf("GetFFmpegPath() = %q, expected %q", path, fakeFFmpegPath)
 	}
 }
 
@@ -66,20 +66,20 @@ func TestGetFFmpegPath_CustomFlag(t *testing.T) {
 	customFFmpegPath = "/custom/ffmpeg"
 	defer func() { customFFmpegPath = original }()
 
-	// Env var da set edilmiş olsa bile flag öncelikli olmalı
+	// env var is also set; the flag value must take priority
 	t.Setenv("FFMPEG_PATH", "/env/ffmpeg")
 
 	path, err := GetFFmpegPath()
 	if err != nil {
-		t.Fatalf("GetFFmpegPath() beklenmedik hata: %v", err)
+		t.Fatalf("GetFFmpegPath() unexpected error: %v", err)
 	}
 	if path != "/custom/ffmpeg" {
-		t.Errorf("GetFFmpegPath() = %q, beklenen %q (flag öncelikli olmalı)", path, "/custom/ffmpeg")
+		t.Errorf("GetFFmpegPath() = %q, expected %q (flag must take priority)", path, "/custom/ffmpeg")
 	}
 }
 
 func TestGetFFmpegPath_NotFound(t *testing.T) {
-	// Tüm kaynakları temizle; sistem PATH'inde ffmpeg yoksa hata döner
+	// clear all sources; expect an error if ffmpeg is not in PATH
 	original := customFFmpegPath
 	customFFmpegPath = ""
 	defer func() { customFFmpegPath = original }()
@@ -88,17 +88,17 @@ func TestGetFFmpegPath_NotFound(t *testing.T) {
 
 	path, err := GetFFmpegPath()
 	if err != nil {
-		// Beklenen durum: ffmpeg kurulu değil
-		t.Logf("GetFFmpegPath() hata döndü (bekleniyor): %v", err)
+		// expected: ffmpeg is not installed
+		t.Logf("GetFFmpegPath() returned expected error: %v", err)
 		return
 	}
-	// ffmpeg kurulu olan sistemde test geçerli, path loglanır
-	t.Logf("ffmpeg sistemde mevcut, atlıyor: %s", path)
+	// ffmpeg is present on this system, log and pass
+	t.Logf("ffmpeg found on system, skipping not-found check: %s", path)
 }
 
-// ─────────────────────────────────────────
+// -----------------------------------------
 // GetFFprobePath
-// ─────────────────────────────────────────
+// -----------------------------------------
 
 func TestGetFFprobePath_EnvVar(t *testing.T) {
 	fakeFFprobePath := "/fake/path/to/ffprobe"
@@ -106,10 +106,10 @@ func TestGetFFprobePath_EnvVar(t *testing.T) {
 
 	path, err := GetFFprobePath()
 	if err != nil {
-		t.Fatalf("GetFFprobePath() beklenmedik hata: %v", err)
+		t.Fatalf("GetFFprobePath() unexpected error: %v", err)
 	}
 	if path != fakeFFprobePath {
-		t.Errorf("GetFFprobePath() = %q, beklenen %q", path, fakeFFprobePath)
+		t.Errorf("GetFFprobePath() = %q, expected %q", path, fakeFFprobePath)
 	}
 }
 
@@ -118,8 +118,8 @@ func TestGetFFprobePath_NotFound(t *testing.T) {
 
 	path, err := GetFFprobePath()
 	if err != nil {
-		t.Logf("GetFFprobePath() hata döndü (bekleniyor): %v", err)
+		t.Logf("GetFFprobePath() returned expected error: %v", err)
 		return
 	}
-	t.Logf("ffprobe sistemde mevcut, atlıyor: %s", path)
+	t.Logf("ffprobe found on system, skipping not-found check: %s", path)
 }

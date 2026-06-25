@@ -5,30 +5,30 @@ import (
 	"testing"
 )
 
-// ─────────────────────────────────────────
-// getLibreOfficePath — öncelik sırası
-// ─────────────────────────────────────────
+// -----------------------------------------
+// getLibreOfficePath - priority order
+// -----------------------------------------
 
 func TestGetLibreOfficePath_CustomFlag(t *testing.T) {
-	// Paket değişkenini doğrudan set et (flag ile aynı etki)
+	// set the package variable directly, which has the same effect as the flag
 	original := customLibreOfficePath
 	customLibreOfficePath = "/custom/soffice"
 	defer func() { customLibreOfficePath = original }()
 
-	// Env var da set edilmiş olsa bile --libreoffice-path flag öncelikli
+	// env var is also set; --libreoffice-path flag must take priority
 	t.Setenv("LIBREOFFICE_PATH", "/env/soffice")
 
 	path, err := getLibreOfficePath()
 	if err != nil {
-		t.Fatalf("getLibreOfficePath() beklenmedik hata: %v", err)
+		t.Fatalf("getLibreOfficePath() unexpected error: %v", err)
 	}
 	if path != "/custom/soffice" {
-		t.Errorf("getLibreOfficePath() = %q, beklenen %q (flag öncelikli olmalı)", path, "/custom/soffice")
+		t.Errorf("getLibreOfficePath() = %q, expected %q (flag must take priority)", path, "/custom/soffice")
 	}
 }
 
 func TestGetLibreOfficePath_EnvVar(t *testing.T) {
-	// Flag temiz, sadece env var
+	// flag is clear; only env var is set
 	original := customLibreOfficePath
 	customLibreOfficePath = ""
 	defer func() { customLibreOfficePath = original }()
@@ -38,15 +38,15 @@ func TestGetLibreOfficePath_EnvVar(t *testing.T) {
 
 	path, err := getLibreOfficePath()
 	if err != nil {
-		t.Fatalf("getLibreOfficePath() beklenmedik hata: %v", err)
+		t.Fatalf("getLibreOfficePath() unexpected error: %v", err)
 	}
 	if path != fakeLibreOfficePath {
-		t.Errorf("getLibreOfficePath() = %q, beklenen %q", path, fakeLibreOfficePath)
+		t.Errorf("getLibreOfficePath() = %q, expected %q", path, fakeLibreOfficePath)
 	}
 }
 
 func TestGetLibreOfficePath_NotFound(t *testing.T) {
-	// Hiçbir kaynak set edilmemiş; LibreOffice kurulu değilse hata döner
+	// no source is set; expect an error if LibreOffice is not installed
 	original := customLibreOfficePath
 	customLibreOfficePath = ""
 	defer func() { customLibreOfficePath = original }()
@@ -55,32 +55,33 @@ func TestGetLibreOfficePath_NotFound(t *testing.T) {
 
 	path, err := getLibreOfficePath()
 	if err != nil {
-		// Beklenen durum: kurulu değil
-		t.Logf("getLibreOfficePath() hata döndü (bekleniyor): %v", err)
+		// expected: LibreOffice is not installed
+		t.Logf("getLibreOfficePath() returned expected error: %v", err)
 		return
 	}
-	// LibreOffice sistemde kurulu — test ortamına göre geçer
-	t.Logf("LibreOffice sistemde mevcut, atlıyor: %s", path)
+	// LibreOffice is present on this system
+	t.Logf("LibreOffice found on system, skipping not-found check: %s", path)
 }
 
-// ─────────────────────────────────────────
-// PdfFromOffice — LibreOffice gerekmeden hata yolu
-// ─────────────────────────────────────────
+// -----------------------------------------
+// PdfFromOffice - error path without LibreOffice
+// -----------------------------------------
 
 func TestPdfFromOffice_LibreOfficeNotFound(t *testing.T) {
-	// LibreOffice'i kasıtlı olarak geçersiz bir yola yönlendir
+	// point LibreOffice to a path that does not exist
 	original := customLibreOfficePath
 	customLibreOfficePath = "/nonexistent/path/to/soffice"
 	defer func() { customLibreOfficePath = original }()
 
-	// Geçersiz yol verildiğinde exec.Command hata verecek
+	// exec.Command will fail because the executable does not exist
 	err := PdfFromOffice("input.docx")
-	// NOT: mevcut kod log.Fatal çağırıyor — bu testin geçmesi için
-	// fonksiyonun error döndürmesi gerekir (Bug #2'nin düzeltilmiş hali).
-	// Şu anki haliyle log.Fatal çağrısı process'i öldürür ve test paniklenir.
-	// Bu test Bug #2 düzeltilince düzgün çalışacak.
+	// NOTE: the current code calls log.Fatal inside getLibreOfficePath when
+	// no path is found, which would kill the test process. However, when a
+	// custom path is provided, getLibreOfficePath returns it without checking
+	// existence, so the failure happens in CombinedOutput and is returned as
+	// an error. This test will behave correctly once Bug #2 is fully fixed.
 	if err == nil {
-		t.Error("geçersiz LibreOffice yolu için hata bekleniyor, nil döndü")
+		t.Error("expected error for invalid LibreOffice path, got nil")
 	}
 }
 
@@ -90,8 +91,7 @@ func TestDocFromPdf_LibreOfficeNotFound(t *testing.T) {
 	defer func() { customLibreOfficePath = original }()
 
 	err := DocFromPdf("input.pdf")
-	// Aynı şekilde Bug #2 düzeltilince bu test düzgün çalışacak
 	if err == nil {
-		t.Error("geçersiz LibreOffice yolu için hata bekleniyor, nil döndü")
+		t.Error("expected error for invalid LibreOffice path, got nil")
 	}
 }

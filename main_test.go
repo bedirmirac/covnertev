@@ -15,10 +15,10 @@ func TestArgsValidate(t *testing.T) {
 		name        string
 		args        Args
 		wantErr     bool
-		errContains string // Hata mesajında bulunması gereken substring
+		errContains string // substring that must appear in the error message
 	}{
 		{
-			name: "mode boş",
+			name: "empty mode",
 			args: Args{
 				Mode:        strPtr(""),
 				Input:       strPtr("input.txt"),
@@ -30,7 +30,7 @@ func TestArgsValidate(t *testing.T) {
 			errContains: "usage",
 		},
 		{
-			name: "input boş",
+			name: "empty input",
 			args: Args{
 				Mode:        strPtr("doc"),
 				Input:       strPtr(""),
@@ -42,7 +42,7 @@ func TestArgsValidate(t *testing.T) {
 			errContains: "usage",
 		},
 		{
-			name: "doc modunda output verilmiş — yasak",
+			name: "doc mode with output flag set",
 			args: Args{
 				Mode:        strPtr("doc"),
 				Input:       strPtr("input.docx"),
@@ -54,7 +54,7 @@ func TestArgsValidate(t *testing.T) {
 			errContains: "Do NOT use '-o'",
 		},
 		{
-			name: "img modunda output eksik",
+			name: "img mode missing output",
 			args: Args{
 				Mode:        strPtr("img"),
 				Input:       strPtr("input.png"),
@@ -66,7 +66,7 @@ func TestArgsValidate(t *testing.T) {
 			errContains: "Output is needed",
 		},
 		{
-			name: "media modunda output eksik",
+			name: "media mode missing output",
 			args: Args{
 				Mode:        strPtr("media"),
 				Input:       strPtr("input.mp4"),
@@ -77,9 +77,9 @@ func TestArgsValidate(t *testing.T) {
 			wantErr:     true,
 			errContains: "Output is needed",
 		},
-		// --- Geçerli senaryolar ---
+		// valid cases
 		{
-			name: "doc modu geçerli",
+			name: "doc mode valid",
 			args: Args{
 				Mode:        strPtr("doc"),
 				Input:       strPtr("input.docx"),
@@ -90,7 +90,7 @@ func TestArgsValidate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "img modu geçerli",
+			name: "img mode valid",
 			args: Args{
 				Mode:        strPtr("img"),
 				Input:       strPtr("input.png"),
@@ -101,7 +101,7 @@ func TestArgsValidate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "media modu — ffmpeg ve ffprobe önceden verilmiş, oto-arama yapılmamalı",
+			name: "media mode with ffmpeg and ffprobe already set, no auto-detection",
 			args: Args{
 				Mode:        strPtr("media"),
 				Input:       strPtr("input.mp4"),
@@ -119,15 +119,15 @@ func TestArgsValidate(t *testing.T) {
 
 			if tt.wantErr {
 				if err == nil {
-					t.Errorf("Validate() hata bekleniyor ama nil döndü")
+					t.Errorf("Validate() expected error but got nil")
 					return
 				}
 				if tt.errContains != "" && !strings.Contains(err.Error(), tt.errContains) {
-					t.Errorf("Validate() hata = %q, içermesi beklenen: %q", err.Error(), tt.errContains)
+					t.Errorf("Validate() error = %q, expected to contain: %q", err.Error(), tt.errContains)
 				}
 			} else {
 				if err != nil {
-					t.Errorf("Validate() beklenmedik hata: %v", err)
+					t.Errorf("Validate() unexpected error: %v", err)
 				}
 			}
 		})
