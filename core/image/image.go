@@ -26,6 +26,9 @@ func ImageToImage(inputPath, outputPath string) error {
 }
 
 func ImageToPDF(imagePaths []string, outputPath string) error {
+	if len(imagePaths) == 0 {
+		return fmt.Errorf("at least one image file is required")
+	}
 	conf := model.NewDefaultConfiguration()
 	err := api.ImportImagesFile(imagePaths, outputPath, nil, conf)
 	if err != nil {
