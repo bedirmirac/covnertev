@@ -26,6 +26,9 @@ func ImageToImage(inputPath, outputPath string) error {
 }
 
 func ImageToPDF(imagePaths []string, outputPath string) error {
+	if len(imagePaths) == 0 {
+		return fmt.Errorf("en az bir görüntü dosyası gerekli")
+	}
 	conf := model.NewDefaultConfiguration()
 	err := api.ImportImagesFile(imagePaths, outputPath, nil, conf)
 	if err != nil {
