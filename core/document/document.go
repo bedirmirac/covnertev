@@ -3,7 +3,6 @@ package document
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -64,7 +63,7 @@ func getLibreOfficePath() (string, error) {
 func PdfFromOffice(inputPath string) error {
 	libreofficeExe, err := getLibreOfficePath()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	args := []string{
 		"--headless",
@@ -84,7 +83,7 @@ func PdfFromOffice(inputPath string) error {
 func DocFromPdf(inputPath string) error {
 	libreofficeExe, err := getLibreOfficePath()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	args := []string{
 		"--headless",

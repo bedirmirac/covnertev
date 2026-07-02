@@ -73,13 +73,9 @@ func TestPdfFromOffice_LibreOfficeNotFound(t *testing.T) {
 	customLibreOfficePath = "/nonexistent/path/to/soffice"
 	defer func() { customLibreOfficePath = original }()
 
-	// exec.Command will fail because the executable does not exist
+	// exec.Command will fail because the executable does not exist,
+	// and the error is now propagated correctly via return err.
 	err := PdfFromOffice("input.docx")
-	// NOTE: the current code calls log.Fatal inside getLibreOfficePath when
-	// no path is found, which would kill the test process. However, when a
-	// custom path is provided, getLibreOfficePath returns it without checking
-	// existence, so the failure happens in CombinedOutput and is returned as
-	// an error. This test will behave correctly once Bug #2 is fully fixed.
 	if err == nil {
 		t.Error("expected error for invalid LibreOffice path, got nil")
 	}
