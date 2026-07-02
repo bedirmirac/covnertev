@@ -85,6 +85,10 @@ func main() {
 		fmt.Println("Document converted.")
 
 	case "img":
+		if strings.ToLower(filepath.Ext(*args.Output)) == ".webp" {
+			fmt.Println("unsupported output format: WEBP writing is not supported yet")
+			os.Exit(1)
+		}
 		if filepath.Ext(*args.Input) == ".pdf" {
 			imgs := strings.Split(*input, ",")
 			err := image.ImageToPDF(imgs, *output)
